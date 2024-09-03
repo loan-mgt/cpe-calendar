@@ -1,43 +1,60 @@
 package request
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"os"
+	"regexp"
+	"strings"
 )
 
-func FetchData() ([]byte, error) {
-	url := "https://mycpe.cpe.fr/faces/Planning.xhtml"
-	method := "POST"
-
-	// Data to be sent in the POST request
-	data := "javax.faces.partial.ajax=true&javax.faces.source=form%3Aj_idt118&javax.faces.partial.execute=form%3Aj_idt118&javax.faces.partial.render=form%3Aj_idt118&form%3Aj_idt118=form%3Aj_idt118&form%3Aj_idt118_start=1725228000000&form%3Aj_idt118_end=1728684000000&form=form&form%3AlargeurDivCenter=742&form%3AidInit=webscolaapp.Planning_515953417222451125&form%3Adate_input=02%2F09%2F2024&form%3Aweek=36-2024&form%3Aj_idt118_view=agendaWeek&form%3AoffsetFuseauNavigateur=-7200000&form%3Aonglets_activeIndex=0&form%3Aonglets_scrollState=0&javax.faces.ViewState=-2413793382658307369:6268075684027325918"
-
-	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(data)))
+func FetchData(start, end string) ([]byte, error) {
+	// Step 1: Login and retrieve session cookie and ViewState
+	sessionCookie, viewState, err := loginAndGetSessionAndViewState()
 	if err != nil {
-		log.Fatalf("Failed to create request: %v", err)
+		return nil, err
 	}
 
-	// Adding headers to the request
-	req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
-	req.Header.Add("Accept", "application/xml, text/xml, */*; q=0.01")
-	req.Header.Add("Accept-Language", "en-US,en;q=0.5")
-	req.Header.Add("Accept-Encoding", "gzip, deflate, br, zstd")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
-	req.Header.Add("Faces-Request", "partial/ajax")
+	log.Printf("Session cookie: %s, ViewState: %s", sessionCookie, viewState)
+
+	// Step 2: Make a GET request to /faces/Planning.xhtml to get the updated ViewState
+	viewState, err = getUpdatedViewState(sessionCookie, viewState)
+	if err != nil {
+		return nil, err
+	}
+
+	//viewState = "5738921265440495234:7732465887243546242"
+
+	//sessionCookie = "JSESSIONID=AE27628EB9907EE32AF5A5B93B6285A1"
+
+	log.Printf("Session cookie: %s, Updated ViewState: %s", sessionCookie, viewState)
+
+	// Step 3: Use retrieved sessionCookie and viewState for the data request
+	urlStr := "https://mycpe.cpe.fr/faces/Planning.xhtml"
+
+	// Using url.Values to construct the data
+	data := url.Values{
+		"javax.faces.partial.ajax":   {"true"},
+		"javax.faces.partial.render": {"form:j_idt118"},
+		"form:j_idt118":              {"form:j_idt118"},
+		"form:j_idt118_start":        {start},
+		"form:j_idt118_end":          {end},
+		"javax.faces.ViewState":      {viewState},
+	}
+
+	// Converting the data to the appropriate format for the request body
+	req, err := http.NewRequest("POST", urlStr, strings.NewReader(data.Encode()))
+	if err != nil {
+		return nil, err
+	}
+
+	// Adding essential headers to match the curl command
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
 	req.Header.Add("X-Requested-With", "XMLHttpRequest")
-	req.Header.Add("Origin", "https://mycpe.cpe.fr")
-	req.Header.Add("Connection", "keep-alive")
-	req.Header.Add("Referer", "https://mycpe.cpe.fr/faces/Planning.xhtml")
-	req.Header.Add("Cookie", "JSESSIONID=58FF76D44D7D2FFC45037DC6DEC307C3")
-	req.Header.Add("Sec-Fetch-Dest", "empty")
-	req.Header.Add("Sec-Fetch-Mode", "cors") // Updated from "no-cors" to "cors" to match the curl
-	req.Header.Add("Sec-Fetch-Site", "same-origin")
-	req.Header.Add("Priority", "u=0")
-	req.Header.Add("TE", "trailers")
-	req.Header.Add("Pragma", "no-cache")
-	req.Header.Add("Cache-Control", "no-cache")
+	req.Header.Add("Cookie", sessionCookie)
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 
 	// Sending the request
 	client := &http.Client{}
@@ -54,4 +71,102 @@ func FetchData() ([]byte, error) {
 	}
 
 	return body, nil
+}
+
+func loginAndGetSessionAndViewState() (string, string, error) {
+	// Retrieve username and password from environment variables
+	username := os.Getenv("MYCPE_USERNAME")
+	password := os.Getenv("MYCPE_PASSWORD")
+
+	// URL for login
+	urlStr := "https://mycpe.cpe.fr/login"
+
+	// Prepare form data for login
+	loginData := url.Values{
+		"username": {username},
+		"password": {password},
+	}
+
+	// Creating the login request
+	req, err := http.NewRequest("POST", urlStr, strings.NewReader(loginData.Encode()))
+	if err != nil {
+		return "", "", err
+	}
+
+	// Adding headers
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Upgrade-Insecure-Requests", "1")
+
+	// Sending the login request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+
+	// Retrieve session cookie
+	sessionCookie := ""
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name == "JSESSIONID" {
+			sessionCookie = "JSESSIONID=" + cookie.Value
+			break
+		}
+	}
+
+	// Reading the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", "", err
+	}
+
+	// Extract the ViewState value from the response HTML
+	viewState := extractViewState(string(body))
+
+	return sessionCookie, viewState, nil
+}
+
+func getUpdatedViewState(sessionCookie, viewState string) (string, error) {
+	// URL for the GET request
+	urlStr := "https://mycpe.cpe.fr/faces/Planning.xhtml"
+
+	// Creating the GET request
+	req, err := http.NewRequest("GET", urlStr, nil)
+	if err != nil {
+		return "", err
+	}
+
+	// Adding headers
+	req.Header.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
+	req.Header.Add("Cookie", sessionCookie)
+
+	// Sending the GET request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	// Reading the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return "", err
+	}
+
+	// Extract the updated ViewState value from the response HTML
+	updatedViewState := extractViewState(string(body))
+
+	return updatedViewState, nil
+}
+
+// Function to extract javax.faces.ViewState value using regex
+func extractViewState(html string) string {
+	re := regexp.MustCompile(`name="javax.faces.ViewState" id="j_id1:javax.faces.ViewState:0" value="([^"]+)"`)
+	match := re.FindStringSubmatch(html)
+	if len(match) > 1 {
+		return match[1]
+	}
+	return ""
 }
