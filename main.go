@@ -5,10 +5,21 @@ import (
 	"cpe/calendar/request"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.HandleFunc("/", generateICSHandler)
+
+	r := mux.NewRouter()
+
+	r.HandleFunc("/calendar.ics", generateICSHandler).Methods("GET")
+	mux := http.NewServeMux()
+
+	mux.Handle("/ics/", r)
+
+	mux.Handle("/", http.FileServer(http.Dir("static")))
+
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
