@@ -1,6 +1,7 @@
 package request
 
 import (
+	"errors"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"regexp"
 	"strings"
+
+	"github.com/joho/godotenv"
 )
 
 func FetchData(start, end string) ([]byte, error) {
@@ -100,6 +103,11 @@ func getAnonCookie() (string, error) {
 }
 
 func loginAndGetSessionAndViewState(anonCookie string) (string, error) {
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("Error loading .env file")
+	}
+
 	// Retrieve username and password from environment variables
 	username := os.Getenv("MYCPE_USERNAME")
 	password := os.Getenv("MYCPE_PASSWORD")
@@ -127,14 +135,14 @@ func loginAndGetSessionAndViewState(anonCookie string) (string, error) {
 	// Sending the login request
 	client := &http.Client{
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// Keep the cookies from the redirect chain
-			req.Header.Add("Cookie", via[0].Header.Get("Cookie"))
-			return nil
+			// trow error to stop the redirect
+			return errors.New("stop")
 		},
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		// return cookie from reponse
+		return resp.Header.Get("Set-Cookie"), nil
 	}
 	defer resp.Body.Close()
 
@@ -152,7 +160,7 @@ func loginAndGetSessionAndViewState(anonCookie string) (string, error) {
 
 func getUpdatedViewState(sessionCookie string) (string, error) {
 	// URL for the GET request
-	urlStr := "https://mycpe.cpe.fr/faces/Planning.xhtml"
+	urlStr := "https://mycpe.cpe.fr/"
 
 	// Creating the GET request
 	req, err := http.NewRequest("GET", urlStr, nil)
@@ -305,7 +313,7 @@ func makeFinalDataRequest(sessionCookie, viewState, start, end string) ([]byte, 
 
 func extractViewState(html string) string {
 	// Extract the ViewState value using a regular expression
-	re := regexp.MustCompile(`id="javax.faces.ViewState" value="([^"]*)"`)
+	re := regexp.MustCompile(`id="j_id1:javax.faces.ViewState:0" value="([^"]*)"`)
 	match := re.FindStringSubmatch(html)
 	if len(match) > 1 {
 		return match[1]
