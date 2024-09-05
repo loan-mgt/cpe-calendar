@@ -13,10 +13,10 @@ func main() {
 	r := mux.NewRouter()
 
 	// Handle the calendar.ics route
-	r.HandleFunc("/calendar.ics", generateICSHandler).Methods("GET")
+	r.HandleFunc("/3irc.ics", generateICSHandler).Methods("GET")
 
 	// Serve static files
-	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
+	r.PathPrefix("/").Handler(http.FileServer(http.Dir("static/")))
 
 	// Use the router in the http server
 	log.Fatal(http.ListenAndServe(":8080", r))
