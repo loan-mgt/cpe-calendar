@@ -10,17 +10,16 @@ import (
 )
 
 func main() {
-
 	r := mux.NewRouter()
 
+	// Handle the calendar.ics route
 	r.HandleFunc("/calendar.ics", generateICSHandler).Methods("GET")
-	mux := http.NewServeMux()
 
-	mux.Handle("/ics/", r)
+	// Serve static files
+	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 
-	mux.Handle("/", http.FileServer(http.Dir("static")))
-
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Use the router in the http server
+	log.Fatal(http.ListenAndServe(":8080", r))
 }
 
 func generateICSHandler(w http.ResponseWriter, r *http.Request) {
