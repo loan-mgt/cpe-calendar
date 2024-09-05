@@ -11,8 +11,11 @@ import (
 const regexPattern = `(?P<location>.*?)(?P<promo>[1-9][A-Z]{3,})(?P<summary>.*?)(?P<description>(( |n)[A-Z]{3,} .*)|$)`
 
 // GenerateICS generates an ICS string from a list of events
-func GenerateICS(events []Event) string {
-	ics := "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Your Organization//Your Product//EN\n"
+func GenerateICS(events []Event, calendarName string) string {
+	ics := "BEGIN:VCALENDAR\n"
+	ics += "VERSION:2.0\n"
+	ics += "PRODID:-//Your Organization//Your Product//EN\n"
+	ics += fmt.Sprintf("X-WR-CALNAME:%s\n", calendarName) // Set calendar name
 
 	// Define the layout for parsing the datetime with a timezone offset
 	const layout = "2006-01-02T15:04:05-0700"

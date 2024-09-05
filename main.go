@@ -5,9 +5,18 @@ import (
 	"cpe/calendar/request"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
+
+func init() {
+	// Load environment variables from .env file
+	if err := godotenv.Load(); err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
+}
 
 func main() {
 	r := mux.NewRouter()
@@ -23,10 +32,10 @@ func main() {
 }
 
 // generateICSHandler generates the ICS file and sends it in the response with a given filename
-func generateICSHandler(w http.ResponseWriter, _ *http.Request, filename string) {
-	// Set start and end times (these could be retrieved from request parameters if needed)
-	start := "1725228000000" // Example start timestamp
-	end := "1728684000000"   // Example end timestamp
+func generateICSHandler(w http.ResponseWriter, _ *http.Request, filename, calendarName string) {
+	// Get start and end times from environment variables
+	start := os.Getenv("START_TIMESTAMP")
+	end := os.Getenv("END_TIMESTAMP")
 
 	// Step 1: Fetch data from the source using the updated FetchData function
 	data, err := request.FetchData(start, end)
@@ -46,8 +55,8 @@ func generateICSHandler(w http.ResponseWriter, _ *http.Request, filename string)
 		return
 	}
 
-	// Step 3: Generate the iCal file
-	icsContent := ical.GenerateICS(events)
+	// Step 3: Generate the iCal file with the calendar name
+	icsContent := ical.GenerateICS(events, calendarName)
 
 	// Step 4: Set headers for the iCal file response with the provided filename
 	w.Header().Set("Content-Type", "text/calendar")
@@ -59,6 +68,6 @@ func generateICSHandler(w http.ResponseWriter, _ *http.Request, filename string)
 
 // generate3IRCHandler is a wrapper around generateICSHandler that uses a specific filename
 func generate3IRCHandler(w http.ResponseWriter, r *http.Request) {
-	// Call generateICSHandler with the specific filename
-	generateICSHandler(w, r, "3irc_calendar.ics")
+	// Call generateICSHandler with the specific filename and calendar name
+	generateICSHandler(w, r, "3irc_calendar.ics", "3IRC Calendar")
 }

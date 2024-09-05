@@ -7,6 +7,8 @@ services:
     environment:
       - MYCPE_USERNAME=${MYCPE_USERNAME}
       - MYCPE_PASSWORD=${MYCPE_PASSWORD}
+      - START_TIMESTAMP=${START_TIMESTAMP}
+      - END_TIMESTAMP=${END_TIMESTAMP}
 
   nginx:
     image: ghcr.io/loan-mgt/10m-caching:latest
