@@ -1,1 +1,3 @@
 .env
+secret/private.pem
+secret/*

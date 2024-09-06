@@ -6,14 +6,13 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 
 	"github.com/joho/godotenv"
 )
 
-func FetchData(start, end string) ([]byte, error) {
+func FetchData(start, end, username, password string) ([]byte, error) {
 	// Step 1: Get an anonymous session cookie
 	sessionCookie, err := getAnonCookie()
 	if err != nil {
@@ -23,7 +22,7 @@ func FetchData(start, end string) ([]byte, error) {
 	log.Printf("Anon cookie: %s\n", sessionCookie)
 
 	// Step 2: Login and retrieve a new session cookie
-	sessionCookie, err = loginAndGetSessionAndViewState(sessionCookie)
+	sessionCookie, err = loginAndGetSessionAndViewState(sessionCookie, username, password)
 	if err != nil {
 		return nil, err
 	}
@@ -102,15 +101,11 @@ func getAnonCookie() (string, error) {
 	return sessionCookie, nil
 }
 
-func loginAndGetSessionAndViewState(anonCookie string) (string, error) {
+func loginAndGetSessionAndViewState(username string, password string, anonCookie string) (string, error) {
 	err := godotenv.Load()
 	if err != nil {
 		log.Printf("Error loading .env file")
 	}
-
-	// Retrieve username and password from environment variables
-	username := os.Getenv("MYCPE_USERNAME")
-	password := os.Getenv("MYCPE_PASSWORD")
 
 	// URL for login
 	urlStr := "https://mycpe.cpe.fr/login"

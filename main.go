@@ -38,7 +38,7 @@ func generateICSHandler(w http.ResponseWriter, _ *http.Request, filename, calend
 	end := os.Getenv("END_TIMESTAMP")
 
 	// Step 1: Fetch data from the source using the updated FetchData function
-	data, err := request.FetchData(start, end)
+	data, err := request.FetchData(start, end, os.Getenv("USERNAME"), os.Getenv("PASSWORD"))
 	if err != nil {
 		log.Printf("Failed to fetch data: %v", err)
 		http.Error(w, "Failed to fetch data", http.StatusInternalServerError)

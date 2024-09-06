@@ -25,6 +25,7 @@ COPY --from=builder /app/calendar-app .
 
 # Copy static files to the container
 COPY static ./static
+COPY secret ./secret
 
 # Expose the port on which the Go app will run
 EXPOSE 8080

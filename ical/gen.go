@@ -14,8 +14,11 @@ const regexPattern = `(?P<location>.*?)(?P<promo>[1-9][A-Z]{3,})(?P<summary>.*?)
 func GenerateICS(events []Event, calendarName string) string {
 	ics := "BEGIN:VCALENDAR\n"
 	ics += "VERSION:2.0\n"
-	ics += "PRODID:-//Your Organization//Your Product//EN\n"
-	ics += fmt.Sprintf("X-WR-CALNAME:%s\n", calendarName) // Set calendar name
+	ics += "PRODID:-//github.com/qypol342 //CPE Calendar//EN\n"
+	ics += fmt.Sprintf("NAME:%s\n", calendarName)
+	ics += fmt.Sprintf("X-WR-CALNAME:%s\n", calendarName)
+	ics += fmt.Sprintf("Description:%s: %s\n", "CPE Calendar", calendarName)
+	ics += fmt.Sprintf("X-WR-CALDESC:%s: %s\n", "CPE Calendar", calendarName)
 
 	// Define the layout for parsing the datetime with a timezone offset
 	const layout = "2006-01-02T15:04:05-0700"
