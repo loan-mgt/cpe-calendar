@@ -19,6 +19,7 @@ func GenerateICS(events []Event, calendarName string) string {
 	ics += fmt.Sprintf("X-WR-CALNAME:%s\n", calendarName)
 	ics += fmt.Sprintf("Description:%s: %s\n", "CPE Calendar", calendarName)
 	ics += fmt.Sprintf("X-WR-CALDESC:%s: %s\n", "CPE Calendar", calendarName)
+	ics += "REFRESH-INTERVAL;VALUE=DURATION:PT1H\n"
 
 	// Define the layout for parsing the datetime with a timezone offset
 	const layout = "2006-01-02T15:04:05-0700"

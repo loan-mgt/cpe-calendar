@@ -88,8 +88,6 @@ function arrayBufferToBase64(buffer) {
 */
 async function encryptMessage(message) {
 
-    console.log(encryptionKey);
-    
     const encoded = getMessageEncoding(message);
     const ciphertext = await window.crypto.subtle.encrypt(
         {

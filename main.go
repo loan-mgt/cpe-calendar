@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
@@ -16,9 +17,7 @@ var tpl *template.Template
 
 func init() {
 	// Load environment variables from .env file
-	if err := godotenv.Load(); err != nil {
-		log.Printf("Error loading .env file: %v", err)
-	}
+	godotenv.Load()
 	// Parse templates
 	tpl = template.Must(template.ParseFiles(filepath.Join("static", "index.html")))
 }
@@ -41,7 +40,8 @@ func main() {
 
 // serveIndex renders the index.html Go template with environment variables
 func serveIndex(w http.ResponseWriter, r *http.Request) {
-	publicKey, _ := os.ReadFile(filepath.Join("secret", "public.pem"))
+	publicKey, _ := os.ReadFile(filepath.Join("static", "public.pem"))
+	publicKey = []byte(strings.ReplaceAll(string(publicKey), "\n", ""))
 	separator := os.Getenv("SEPARATOR")
 
 	data := struct {

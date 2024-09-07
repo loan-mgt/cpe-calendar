@@ -17,18 +17,24 @@ RUN go build -o /app/calendar-app main.go
 # Final stage
 FROM alpine:latest
 
+# Install openssl
+RUN apk add --no-cache openssl
+
 # Create a working directory
 WORKDIR /root/
+
+# Create the secret directory for keys
+RUN mkdir -p secret
 
 # Copy the compiled Go binary from the build stage
 COPY --from=builder /app/calendar-app .
 
 # Copy static files to the container
 COPY static ./static
-COPY secret ./secret
+COPY make-key.sh .
 
-# Expose the port on which the Go app will run
-EXPOSE 8080
+# Make the script executable
+RUN chmod +x ./make-key.sh
 
-# Command to run the Go app
-CMD ["./calendar-app"]
+# Use a shell form to run both commands sequentially
+CMD sh -c "./make-key.sh && ./calendar-app"

@@ -6,11 +6,11 @@ services:
     ports:
       - 8100:8080
     environment:
-      - MYCPE_USERNAME=${MYCPE_USERNAME}
-      - MYCPE_PASSWORD=${MYCPE_PASSWORD}
       - START_TIMESTAMP=${START_TIMESTAMP}
       - END_TIMESTAMP=${END_TIMESTAMP}
       - SEPARATOR=${SEPARATOR}
+    volumes:
+      - api-secrets:/root/secret
 
   ical-nginx:
     image: ghcr.io/loan-mgt/10m-caching:latest
@@ -21,3 +21,5 @@ services:
       - ical-api
     environment:
       - API_HOST=ical-api:8080
+volumes:
+  api-secrets:

@@ -5,11 +5,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - MYCPE_USERNAME=${MYCPE_USERNAME}
-      - MYCPE_PASSWORD=${MYCPE_PASSWORD}
       - START_TIMESTAMP=${START_TIMESTAMP}
       - END_TIMESTAMP=${END_TIMESTAMP}
       - SEPARATOR=${SEPARATOR}
+    volumes:
+      - api-secrets:/root/secret
 
   nginx:
     image: ghcr.io/loan-mgt/10m-caching:latest
@@ -19,4 +19,7 @@ services:
     depends_on:
       - api
     environment:
-      - API_HOST=api:8080  # Pass the API host and port as an environment variable
+      - API_HOST=api:8080  
+      
+volumes:
+  api-secrets:
