@@ -46,15 +46,23 @@ func FetchData(start, end, username, password string) ([]byte, error) {
 	log.Printf("Accessed MainMenuPage.xhtml\n")
 
 	// Step 5: Access Planning landing page
-	viewState, err = accessPlanningLanding(sessionCookie)
+	viewState, j_idt, err := accessPlanningLanding(sessionCookie)
 	if err != nil {
 		return nil, err
 	}
 
+	//curl 'https://mycpe.cpe.fr/faces/Planning.xhtml' -X POST -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0' -H 'Accept: application/xml, text/xml, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br, zstd' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Faces-Request: partial/ajax' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://mycpe.cpe.fr' -H 'Connection: keep-alive' -H 'Referer: https://mycpe.cpe.fr/faces/Planning.xhtml' -H 'Cookie: JSESSIONID=2B39334F81CCD20D5D60FCA73B5167E0' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'TE: trailers' --data-raw 'javax.faces.partial.ajax=true&javax.faces.source=form%3Aj_idt119&javax.faces.partial.execute=form%3Aj_idt119&javax.faces.partial.render=form%3Aj_idt119&form%3Aj_idt119=form%3Aj_idt119&form%3Aj_idt119_start=1725228000000&form%3Aj_idt119_end=1725660000000&form=form&form%3AlargeurDivCenter=&form%3AidInit=webscolaapp.Planning_8686754325772970059&form%3Adate_input=02%2F09%2F2024&form%3Aweek=36-2024&form%3Aj_idt119_view=agendaWeek&form%3AoffsetFuseauNavigateur=-7200000&form%3Aonglets_activeIndex=0&form%3Aonglets_scrollState=0&javax.faces.ViewState=-5487281451116740307%3A-2576554943781788046'
+
+	sessionCookie = "JSESSIONID=2B39334F81CCD20D5D60FCA73B5167E0"
+
+	viewState = "-5487281451116740307:-2576554943781788046"
+
+	j_idt = "j_idt119"
+
 	log.Printf("Planning landing viewState: %s\n", viewState)
 
 	// Step 6: Use retrieved sessionCookie and viewState for the final data request
-	body, err := makeFinalDataRequest(sessionCookie, viewState, start, end)
+	body, err := makeFinalDataRequest(sessionCookie, viewState, j_idt, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -229,54 +237,65 @@ func accessMainMenu(sessionCookie, viewState string) error {
 	return nil
 }
 
-func accessPlanningLanding(sessionCookie string) (string, error) {
-	// URL for accessing Planning landing page
-	urlStr := "https://mycpe.cpe.fr/faces/Planning.xhtml"
+func accessPlanningLanding(sessionCookie string) (string, string, error) {
 
-	// Creating the Planning landing page request
-	req, err := http.NewRequest("GET", urlStr, nil)
+	req, err := http.NewRequest("GET", "https://mycpe.cpe.fr/faces/Planning.xhtml", nil)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
+	req.Header.Set("Authority", "mycpe.cpe.fr")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
+	req.Header.Set("Accept-Language", "en,fr;q=0.9,en-GB;q=0.8,en-US;q=0.7")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Cookie", sessionCookie)
+	req.Header.Set("Dnt", "1")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("Referer", "https://mycpe.cpe.fr/")
+	req.Header.Set("Sec-Ch-Ua", "\"Chromium\";v=\"117\", \"Not;A=Brand\";v=\"8\"")
+	req.Header.Set("Sec-Ch-Ua-Mobile", "?0")
+	req.Header.Set("Sec-Ch-Ua-Platform", "\"Windows\"")
+	req.Header.Set("Sec-Fetch-Dest", "document")
+	req.Header.Set("Sec-Fetch-Mode", "navigate")
+	req.Header.Set("Sec-Fetch-Site", "same-origin")
+	req.Header.Set("Sec-Fetch-User", "?1")
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
+	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
 
-	// Adding headers
-	req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
-	req.Header.Add("Cookie", sessionCookie)
-
-	// Sending the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 	defer resp.Body.Close()
 
 	// Reading the response body
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
 	// Extract the updated ViewState value from the response HTML
 	updatedViewState := extractViewState(string(body))
 
-	return updatedViewState, nil
+	j_idt := extractj_idt(string(body))
 
+	return updatedViewState, j_idt, nil
 }
 
-func makeFinalDataRequest(sessionCookie, viewState, start, end string) ([]byte, error) {
+func makeFinalDataRequest(sessionCookie, viewState, j_idt, start, end string) ([]byte, error) {
 	// URL for the final data request
 	urlStr := "https://mycpe.cpe.fr/faces/Planning.xhtml"
 
 	// Using url.Values to construct the data
 	data := url.Values{
 		"javax.faces.partial.ajax":   {"true"},
-		"javax.faces.partial.render": {"form:j_idt118"},
-		"form:j_idt118":              {"form:j_idt118"},
-		"form:j_idt118_start":        {start},
-		"form:j_idt118_end":          {end},
+		"javax.faces.partial.render": {"form:" + j_idt},
+		"form:" + j_idt:              {"form:" + j_idt},
+		"form:" + j_idt + "_start":   {start},
+		"form:" + j_idt + "_end":     {end},
 		"javax.faces.ViewState":      {viewState},
 	}
+
+	log.Printf("j_idt: %s, start: %s, end: %s", j_idt, start, end)
 
 	// Creating the request
 	req, err := http.NewRequest("POST", urlStr, strings.NewReader(data.Encode()))
@@ -309,6 +328,17 @@ func makeFinalDataRequest(sessionCookie, viewState, start, end string) ([]byte, 
 func extractViewState(html string) string {
 	// Extract the ViewState value using a regular expression
 	re := regexp.MustCompile(`id="j_id1:javax.faces.ViewState:0" value="([^"]*)"`)
+	match := re.FindStringSubmatch(html)
+	if len(match) > 1 {
+		return match[1]
+	}
+	return ""
+}
+
+func extractj_idt(html string) string {
+	// Extract the j_idt value using a regular expression
+	// regex <div id="form:(?<j_idt>.*?)" class="schedule"
+	re := regexp.MustCompile(`<div id="form:(?<j_idt>j_idt.{3,5}?)" class="sch`)
 	match := re.FindStringSubmatch(html)
 	if len(match) > 1 {
 		return match[1]
