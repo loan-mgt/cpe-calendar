@@ -5,208 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CPE Calendar</title>
-
     <meta name="description" content="Sync your CPE calendar with your personal one">
     <meta name="keywords" content="calendar, ics, CPE, apple, google">
     <meta name="author" content="https://github.com/loan-mgt">
     <meta property="og:title" content="CPE Calendar">
     <meta property="og:description" content="Sync your CPE calendar with your personal one">
-    <meta property="og:image" content="/banner.png">
+    <meta property="og:image" content="/static/banner.png">
     <meta property="og:url" content="https://cpe-cal.for-loop.fr">
     <meta property="og:type" content="website">
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
 
-
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-
-    <style>
-        /* CSS Variables for colors and other reusable values */
-        :root {
-            --primary-color: #007bff;
-            --primary-color-dark: #0056b3;
-            --text-color: #333;
-            --background-color: #f4f4f4;
-            --card-background: #fff;
-            --card-shadow: rgba(0, 0, 0, 0.1);
-            --toast-background: #333;
-            --toast-color: #fff;
-            --border-color: #ddd;
-            --font-family: Arial, sans-serif;
-            --toast-animation-time: 0.5s;
-        }
-
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: var(--font-family);
-            background-color: var(--background-color);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            box-sizing: border-box;
-        }
-
-        .core {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: 100dvh;
-            background-color: var(--card-background);
-            overflow: hidden;
-        }
-
-        header {
-            background-color: var(--primary-color);
-            color: #fff;
-            padding: 20px;
-            text-align: center;
-        }
-
-        main {
-            padding: 20px;
-            height: 100dvh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #calendar {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            padding: 20px;
-            width: fit-content;
-            height: fit-content;
-        }
-
-        #calendar h2 {
-            font-size: 2em;
-            margin-bottom: 10px;
-        }
-
-        #calendar a {
-            color: var(--primary-color);
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        #calendar a:hover {
-            text-decoration: underline;
-        }
-
-        .list {
-            padding: 20px;
-            background-color: var(--background-color);
-            min-height: 90dvh;
-            max-width: 800px;
-            width: 100%;
-        }
-
-        .list h2 {
-            font-size: 1.5em;
-            margin-bottom: 15px;
-        }
-
-        .list ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        .list li {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border-color);
-            flex-direction: column;
-            gap: 1rem;
-        }
-
-        .list label {
-            font-size: 1.1em;
-            color: var(--text-color);
-        }
-
-        .list button {
-            background-color: var(--primary-color);
-            color: #fff;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 0.9em;
-            transition: background-color 0.3s ease;
-        }
-
-        .list button:hover {
-            background-color: var(--primary-color-dark);
-        }
-
-        #toast {
-            visibility: hidden;
-            min-width: 250px;
-            background-color: var(--toast-background);
-            color: var(--toast-color);
-            text-align: center;
-            border-radius: 5px;
-            padding: 10px;
-            position: fixed;
-            z-index: 1;
-            left: 50%;
-            bottom: 30px;
-            font-size: 17px;
-            transform: translateX(-50%);
-        }
-
-        #toast.show {
-            visibility: visible;
-            animation: fadein var(--toast-animation-time), fadeout var(--toast-animation-time) 2.5s;
-        }
-
-        .center {
-            display: flex;
-            width: 100%;
-            justify-content: center;
-            align-items: center;
-        }
-
-        @keyframes fadein {
-            from {
-                bottom: 0;
-                opacity: 0;
-            }
-
-            to {
-                bottom: 30px;
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeout {
-            from {
-                bottom: 30px;
-                opacity: 1;
-            }
-
-            to {
-                bottom: 0;
-                opacity: 0;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
-
     <div class="core">
         <header>
             <h1>CPE Calendar</h1>
         </header>
-
         <main>
             <div id="calendar">
                 <h2>The best way to stay up-to-date with your schedule using your personal calendar app.</h2>
@@ -214,7 +30,6 @@
             </div>
         </main>
     </div>
-
 
     <div class="list">
         <div class="center">
@@ -227,14 +42,17 @@
                     <input type="text" id="username" placeholder="Email" />
                     <input type="password" id="password" placeholder="Password" />
                 </div>
-
                 <button onclick="generateEncryptedLink()">Generate Calendar Link</button>
             </li>
         </ul>
     </div>
 
     <div id="toast">Link copied to clipboard!</div>
+
     <script>
+        const pemEncodedKey = `{{.PublicKey}}`;
+        const separator = `{{.Separator}}`;
+
         async function generateEncryptedLink() {
             try {
                 const username = document.getElementById("username").value;
@@ -245,7 +63,7 @@
                     return;
                 }
 
-                const encryptedCreds = await encryptMessage(`${username}__|__${password}`);
+                const encryptedCreds = await encryptMessage(`${username}${separator}${password}`);
                 if (!encryptedCreds) throw new Error('Encryption failed');
 
                 const url = `/your-cpe-calendar.ics?creds=${encodeURIComponent(encryptedCreds)}`;
@@ -255,131 +73,8 @@
             }
         }
 
-        function copyLink(link) {
-            const fullLink = `${window.location.origin}${link}`;
-            navigator.clipboard.writeText(fullLink).then(() => {
-                showToast();
-            }).catch(err => {
-                console.error('Failed to copy text: ', err);
-            });
-        }
-
-        const pemEncodedKey = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA26dgq7rL1mdGbcTHBFlgfoSaRF7/j1xXUJIMrTypdF33cFnr1WLejmXarpXPlx21NbUPCN4e+fSkOMILLsRHq37A2+mBp0ytbwl9JoO4A4iQMYxhlSbZRPZHrF7YMZB1saLAplIecsNnwoLSD/MHQogIubXqmZ/mMdfjPoXO0XJAeDhHIBh8ioR79buoiOzNg07bJU/Sr/MjaUY6zGId+1dLO2vzoOA103e85NbCAZ2v8loJONrhZt9mckJFh+Nc+ct/Jxgg5SS/SCpETEg6Q037duHSi695AcLzNGvsVxWpx1iLYDIKQs8ww/Ue6QmNoMmxiuCpRyQ+DHemAYyLuwIDAQAB
------END PUBLIC KEY-----`;
-
-        /*
-        The unwrapped signing key.
-        */
-        let encryptionKey;
-
-        /*
-        Convert a string into an ArrayBuffer
-        from https://developers.google.com/web/updates/2012/06/How-to-convert-ArrayBuffer-to-and-from-String
-        */
-        function str2ab(str) {
-            const buf = new ArrayBuffer(str.length);
-            const bufView = new Uint8Array(buf);
-            for (let i = 0, strLen = str.length; i < strLen; i++) {
-                bufView[i] = str.charCodeAt(i);
-            }
-            return buf;
-        }
-
-        /*
-        Import a PEM encoded RSA public key, to use for RSA-OAEP encryption.
-        Takes a string containing the PEM encoded key, and returns a Promise
-        that will resolve to a CryptoKey representing the public key.
-        */
-
-
-        function importPublicKey(pem) {
-            // fetch the part of the PEM string between header and footer
-            const pemHeader = "-----BEGIN PUBLIC KEY-----";
-            const pemFooter = "-----END PUBLIC KEY-----";
-            const pemContents = pem.substring(pemHeader.length, pem.length - pemFooter.length);
-
-            // Remove newlines and any spaces from the base64-encoded content
-            const pemCleaned = pemContents.replace(/\r?\n|\r/g, "");
-
-            // base64 decode the string to get the binary data
-            const binaryDerString = window.atob(pemCleaned);
-
-            // convert from a binary string to an ArrayBuffer
-            const binaryDer = str2ab(binaryDerString);
-
-            return window.crypto.subtle.importKey(
-                "spki",
-                binaryDer,
-                {
-                    name: "RSA-OAEP",
-                    hash: "SHA-256"
-                },
-                true,
-                ["encrypt"]
-            );
-        }
-
-        /*
-        Fetch the contents of the "message" textbox, and encode it
-        in a form we can use for the encrypt operation.
-        */
-        function getMessageEncoding(message) {
-            const enc = new TextEncoder();
-            return enc.encode(message);
-        }
-
-        /*
-        Get the encoded message, encrypt it and display a representation
-        of the ciphertext in the "Ciphertext" element.
-        */
-        function arrayBufferToBase64(buffer) {
-            let binary = '';
-            const bytes = new Uint8Array(buffer);
-            const len = bytes.byteLength;
-            for (let i = 0; i < len; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return window.btoa(binary);
-        }
-
-        /*
-          Get the encoded message, encrypt it, and return the Base64 encoded ciphertext.
-        */
-        async function encryptMessage(message) {
-
-            console.log(encryptionKey);
-            
-            const encoded = getMessageEncoding(message);
-            const ciphertext = await window.crypto.subtle.encrypt(
-                {
-                    name: "RSA-OAEP"
-                },
-                encryptionKey,
-                encoded
-            );
-
-            // Convert the ciphertext to Base64
-            return arrayBufferToBase64(ciphertext);
-        }
-
-
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.className = 'show';
-            setTimeout(() => {
-                toast.className = toast.className.replace('show', '');
-            }, 3000);
-        }
-
-        importPublicKey(pemEncodedKey).then(key => {
-            encryptionKey = key;
-        });
-
-
     </script>
-
-
+    <script src="/static/encryption.js"></script> 
 </body>
 
 </html>

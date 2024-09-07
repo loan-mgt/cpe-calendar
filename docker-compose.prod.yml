@@ -1,9 +1,10 @@
+version: "3.8"
 services:
-  api:
-    build: .
-    container_name: api
+  ical-api:
+    image: ghcr.io/loan-mgt/cpe-calendar:latest
+    container_name: ical-api
     ports:
-      - "8080:8080"
+      - 8100:8080
     environment:
       - MYCPE_USERNAME=${MYCPE_USERNAME}
       - MYCPE_PASSWORD=${MYCPE_PASSWORD}
@@ -11,12 +12,12 @@ services:
       - END_TIMESTAMP=${END_TIMESTAMP}
       - SEPARATOR=${SEPARATOR}
 
-  nginx:
+  ical-nginx:
     image: ghcr.io/loan-mgt/10m-caching:latest
-    container_name: nginx
+    container_name: ical-nginx
     ports:
-      - "80:80"
+      - 80:80
     depends_on:
-      - api
+      - ical-api
     environment:
-      - API_HOST=api:8080  # Pass the API host and port as an environment variable
+      - API_HOST=ical-api:8080
