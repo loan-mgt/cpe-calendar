@@ -57,7 +57,7 @@ func ParseEvents(data []byte) ([]Event, error) {
 			jsonData = strings.TrimSuffix(jsonData, "]]")
 
 			// Debugging: Print extracted JSON data
-			fmt.Println("Extracted JSON Data:", jsonData)
+			fmt.Println("Extracted JSON Data:", jsonData[:150])
 
 			// Parse the JSON data
 			var events struct {

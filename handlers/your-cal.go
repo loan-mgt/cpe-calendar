@@ -31,7 +31,7 @@ func GenerateICSHandler(w http.ResponseWriter, r *http.Request, filename, calend
 	// Decrypt the message
 	decryptedMessage, err := decrypt.DecryptMessage(cryptedCreds, privateKey)
 	if err != nil {
-		log.Fatalf("Error decrypting message: %v", err)
+		log.Printf("Error decrypting message: %v", err)
 	}
 
 	// Split the decrypted message using the separator
@@ -50,8 +50,6 @@ func GenerateICSHandler(w http.ResponseWriter, r *http.Request, filename, calend
 		http.Error(w, "Failed to fetch data", http.StatusInternalServerError)
 		return
 	}
-
-	log.Printf("Fetched data: %s\n======================", data)
 
 	// Parse the fetched data
 	events, err := ical.ParseEvents(data)

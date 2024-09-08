@@ -8,8 +8,6 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
-
-	"github.com/joho/godotenv"
 )
 
 func FetchData(start, end, username, password string) ([]byte, error) {
@@ -50,14 +48,6 @@ func FetchData(start, end, username, password string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	//curl 'https://mycpe.cpe.fr/faces/Planning.xhtml' -X POST -H 'User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0' -H 'Accept: application/xml, text/xml, */*; q=0.01' -H 'Accept-Language: en-US,en;q=0.5' -H 'Accept-Encoding: gzip, deflate, br, zstd' -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' -H 'Faces-Request: partial/ajax' -H 'X-Requested-With: XMLHttpRequest' -H 'Origin: https://mycpe.cpe.fr' -H 'Connection: keep-alive' -H 'Referer: https://mycpe.cpe.fr/faces/Planning.xhtml' -H 'Cookie: JSESSIONID=2B39334F81CCD20D5D60FCA73B5167E0' -H 'Sec-Fetch-Dest: empty' -H 'Sec-Fetch-Mode: cors' -H 'Sec-Fetch-Site: same-origin' -H 'TE: trailers' --data-raw 'javax.faces.partial.ajax=true&javax.faces.source=form%3Aj_idt119&javax.faces.partial.execute=form%3Aj_idt119&javax.faces.partial.render=form%3Aj_idt119&form%3Aj_idt119=form%3Aj_idt119&form%3Aj_idt119_start=1725228000000&form%3Aj_idt119_end=1725660000000&form=form&form%3AlargeurDivCenter=&form%3AidInit=webscolaapp.Planning_8686754325772970059&form%3Adate_input=02%2F09%2F2024&form%3Aweek=36-2024&form%3Aj_idt119_view=agendaWeek&form%3AoffsetFuseauNavigateur=-7200000&form%3Aonglets_activeIndex=0&form%3Aonglets_scrollState=0&javax.faces.ViewState=-5487281451116740307%3A-2576554943781788046'
-
-	sessionCookie = "JSESSIONID=2B39334F81CCD20D5D60FCA73B5167E0"
-
-	viewState = "-5487281451116740307:-2576554943781788046"
-
-	j_idt = "j_idt119"
 
 	log.Printf("Planning landing viewState: %s\n", viewState)
 
@@ -109,12 +99,7 @@ func getAnonCookie() (string, error) {
 	return sessionCookie, nil
 }
 
-func loginAndGetSessionAndViewState(username string, password string, anonCookie string) (string, error) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Printf("Error loading .env file")
-	}
-
+func loginAndGetSessionAndViewState(anonCookie string, username string, password string) (string, error) {
 	// URL for login
 	urlStr := "https://mycpe.cpe.fr/login"
 
@@ -143,9 +128,20 @@ func loginAndGetSessionAndViewState(username string, password string, anonCookie
 		},
 	}
 	resp, err := client.Do(req)
+
 	if err != nil {
 		// return cookie from reponse
-		return resp.Header.Get("Set-Cookie"), nil
+		cookie := resp.Header.Get("Set-Cookie")
+
+		// Find the index of "JSESSIONID" and extract its value
+		if strings.Contains(cookie, "JSESSIONID") {
+			parts := strings.Split(cookie, ";")
+			for _, part := range parts {
+				if strings.HasPrefix(part, "JSESSIONID=") {
+					return strings.TrimSpace(part), nil
+				}
+			}
+		}
 	}
 	defer resp.Body.Close()
 
@@ -243,23 +239,21 @@ func accessPlanningLanding(sessionCookie string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
-	req.Header.Set("Authority", "mycpe.cpe.fr")
-	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/jxl,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
-	req.Header.Set("Accept-Language", "en,fr;q=0.9,en-GB;q=0.8,en-US;q=0.7")
-	req.Header.Set("Cache-Control", "no-cache")
-	req.Header.Set("Cookie", sessionCookie)
-	req.Header.Set("Dnt", "1")
-	req.Header.Set("Pragma", "no-cache")
+
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:130.0) Gecko/20100101 Firefox/130.0")
+	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/png,image/svg+xml,*/*;q=0.8")
+	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
+	req.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	req.Header.Set("Referer", "https://mycpe.cpe.fr/")
-	req.Header.Set("Sec-Ch-Ua", "\"Chromium\";v=\"117\", \"Not;A=Brand\";v=\"8\"")
-	req.Header.Set("Sec-Ch-Ua-Mobile", "?0")
-	req.Header.Set("Sec-Ch-Ua-Platform", "\"Windows\"")
+	req.Header.Set("Connection", "keep-alive")
+	req.Header.Set("Cookie", sessionCookie)
+	req.Header.Set("Upgrade-Insecure-Requests", "1")
 	req.Header.Set("Sec-Fetch-Dest", "document")
 	req.Header.Set("Sec-Fetch-Mode", "navigate")
 	req.Header.Set("Sec-Fetch-Site", "same-origin")
 	req.Header.Set("Sec-Fetch-User", "?1")
-	req.Header.Set("Upgrade-Insecure-Requests", "1")
-	req.Header.Set("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36")
+	req.Header.Set("Priority", "u=0, i")
+	req.Header.Set("TE", "trailers")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
