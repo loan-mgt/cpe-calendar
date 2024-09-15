@@ -32,7 +32,10 @@ func main() {
 	r.PathPrefix("/static/").Handler(http.StripPrefix("/static/", http.FileServer(http.Dir("static/"))))
 
 	// Serve calendar.ics route
-	r.HandleFunc("/your-cpe-calendar.ics", generate3IRCHandler).Methods("GET")
+	r.HandleFunc("/your-cpe-calendar.ics", handlers.GenerateICSHandler).Methods("GET")
+
+	//validate route
+	r.HandleFunc("/validate", handlers.ValidateHandler).Methods("POST")
 
 	// Use the router in the http server
 	log.Fatal(http.ListenAndServe(":8080", r))
@@ -55,10 +58,4 @@ func serveIndex(w http.ResponseWriter, r *http.Request) {
 	if err := tpl.Execute(w, data); err != nil {
 		http.Error(w, "Error rendering template", http.StatusInternalServerError)
 	}
-}
-
-// generate3IRCHandler is a wrapper around generateICSHandler that uses a specific filename
-func generate3IRCHandler(w http.ResponseWriter, r *http.Request) {
-	// Call generateICSHandler with the specific filename and calendar name
-	handlers.GenerateICSHandler(w, r, "3irc_calendar.ics", "3IRC Calendar")
 }

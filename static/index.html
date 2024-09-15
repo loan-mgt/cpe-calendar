@@ -1,83 +1,153 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPE Calendar</title>
-    <meta name="description" content="Sync your CPE calendar with your personal one">
-    <meta name="keywords" content="calendar, ics, CPE, apple, google">
+    <title>Calendrier CPE</title>
+    <meta name="description" content="Synchronisez votre calendrier CPE avec votre calendrier personnel">
+    <meta name="keywords" content="calendrier, ics, CPE, apple, google">
     <meta name="author" content="https://github.com/loan-mgt">
-    <meta property="og:title" content="CPE Calendar">
-    <meta property="og:description" content="Sync your CPE calendar with your personal one">
+    <meta property="og:title" content="Calendrier CPE">
+    <meta property="og:description" content="Synchronisez votre calendrier CPE avec votre calendrier personnel">
     <meta property="og:image" content="/static/banner.png">
     <meta property="og:url" content="https://cpe-cal.for-loop.fr">
     <meta property="og:type" content="website">
     <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap" rel="stylesheet">
-
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
-    <div class="core">
-        <header>
-            <h1>CPE Calendar</h1>
-        </header>
-        <main>
-            <div id="calendar">
-                <h2>The best way to stay up-to-date with your schedule using your personal calendar app.</h2>
-                <a href="#available">Let's get started</a>
-            </div>
-        </main>
-    </div>
+    <header>
+        <nav>
+            <ul>
+                <img src="/static/logo.svg">
+                <li><a href="#about">À propos</a></li>
+                <li><a href="#trust">Confiance</a></li>
+                <li><a href="#affiliation">Affiliation</a></li>
+            </ul>
+            <ul>
+                <li><a href="https://github.com/loan-mgt/cpe-calendar">Code Source</a></li>
+                <li><a class="btn-secondary" href="#get-calendar">Obtenir l'URL</a></li>
+            </ul>
+        </nav>
+    </header>
 
-    <div class="list">
-        <div class="center">
-            <h2 id="available">Get your calendars</h2>
-        </div>
-        <ul>
-            <li>
-                <label>Enter your CPE credentials to generate a calendar</label>
-                <div>
-                    <input type="text" id="username" placeholder="Email" />
-                    <input type="password" id="password" placeholder="Password" />
+    <main>
+        <section class="hero">
+            <h1>Synchronisez votre calendrier CPE avec votre téléphone</h1>
+            <p>Restez informé de tout changement de plan sans effort et accédez facilement à votre prochain lieu de
+                rendez-vous.</p>
+            <a href="#get-calendar" class="btn-hero">
+                <img src="/static/logo.svg">
+                <span>Obtenez votre calendrier</span></a>
+        </section>
+
+        <section id="get-calendar" class="get-calendar">
+            <h2>Obtenez votre calendrier</h2>
+            <form>
+                <div class="form-row">
+                    <label for="email">Email CPE</label>
+                    <input type="email" id="email" name="email" placeholder="Votre email CPE" required>
                 </div>
-                <button onclick="generateEncryptedLink()">Generate Calendar Link</button>
-            </li>
-        </ul>
-    </div>
+                <div class="form-row">
+                    <label for="password">Mot de passe</label>
+                    <input type="password" id="password" name="password" placeholder="Votre mot de passe CPE" required>
+                </div>
+                <button class="btn-primary" onclick="generateEncryptedLink()">Obtenez votre calendrier</button>
+            </form>
+        </section>
 
+        <section id="about" class="about">
+            <h2>À propos</h2>
+            <p>L'objectif du Calendrier CPE est d'offrir à chaque étudiant un accès simple et sans effort à leur
+                calendrier en connectant leur calendrier scolaire à leur calendrier personnel. Cela fonctionne sur tous
+                les appareils—téléphone, ordinateur portable—et avec n'importe quel fournisseur, y compris Apple et
+                Android.</p>
+            <p>Le calendrier se mettra automatiquement à jour sur votre appareil toutes les heures, vous permettant de
+                rester informé de tout changement d'emploi du temps.</p>
+            <p>Ce projet est open-source. Si à tout moment vous constatez un problème ou une fonctionnalité manquante,
+                n'hésitez pas à nous contacter et à partager cela sur GitHub.</p>
+        </section>
+
+        <section id="trust" class="trust">
+            <h2>Confiance</h2>
+            <p>Comme pour tous les projets open-source hébergés, il n'y a aucune garantie que le propriétaire de
+                l'instance n'ait pas altéré le code officiel. Cela signifie qu'il y aura toujours un certain niveau de
+                confiance impliqué dans la chaîne.</p>
+            <p>Voici quelques recommandations et bonnes pratiques en fonction de votre niveau de confiance ou du risque
+                que vous êtes prêt à accepter :</p>
+            <ol>
+                <li>Pleine confiance : Utilisez le service tel quel.</li>
+                <li>Quelques doutes : Limitez l'impact des problèmes potentiels en prenant des précautions, comme créer
+                    un mot de passe dédié pour le service.</li>
+                <li>Aucun risque : Comme il s'agit d'un projet open-source, vous pouvez héberger votre propre instance.
+                    Un guide est disponible ici.</li>
+            </ol>
+        </section>
+
+        <section id="affiliation" class="affiliation">
+            <h2>Affiliation</h2>
+            <p>Ce projet est entièrement indépendant et n'est affilié à aucune école ou organisation.</p>
+        </section>
+    </main>
+
+    <footer>
+        <div>
+            <p>Calendrier 3 16 5 | 2024</p>
+            <a class="btn-secondary" href="https://github.com/loan-mgt/cpe-calendar">Code Source</a>
+        </div>
+    </footer>
     <div id="toast">Link copied to clipboard!</div>
+<script src="/static/encryption.js"></script>
+<script >
+    const pemEncodedKey = `{{.PublicKey}}`;
+    const separator = `{{.Separator}}`;
 
-    <script>
-        const pemEncodedKey = `{{.PublicKey}}`;
-        const separator = `{{.Separator}}`;
+    
+function copyLink(link) {
+    const fullLink = `${window.location.origin}${link}`;
+    navigator.clipboard.writeText(fullLink).then(() => {
+        showToast();
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+}
 
-        async function generateEncryptedLink() {
-            try {
-                const username = document.getElementById("username").value;
-                const password = document.getElementById("password").value;
 
-                if (!username || !password) {
-                    alert("Please enter both username and password.");
-                    return;
-                }
+    async function generateEncryptedLink() {
+        try {
+            const username = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
 
-                const encryptedCreds = await encryptMessage(`${username}${separator}${password}`);
-                if (!encryptedCreds) throw new Error('Encryption failed');
-
-                const url = `/your-cpe-calendar.ics?creds=${encodeURIComponent(encryptedCreds)}`;
-                copyLink(url);
-            } catch (error) {
-                console.error('Error generating encrypted link:', error);
+            if (!username || !password) {
+                alert("Please enter both username and password.");
+                return;
             }
-        }
 
-    </script>
-    <script src="/static/encryption.js"></script> 
+            const encryptedCreds = await encryptMessage(`${username}${separator}${password}`);
+            if (!encryptedCreds) throw new Error('Encryption failed');
+
+            const url = `/your-cpe-calendar.ics?creds=${encodeURIComponent(encryptedCreds)}`;
+            copyLink(url);
+        } catch (error) {
+            console.error('Error generating encrypted link:', error);
+        }
+    }
+
+    function showToast() {
+    const toast = document.getElementById('toast');
+    toast.className = 'show';
+    setTimeout(() => {
+        toast.className = toast.className.replace('show', '');
+    }, 3000);
+}
+
+importPublicKey(pemEncodedKey).then(key => {
+    encryptionKey = key;
+});
+
+</script>
 </body>
 
 </html>

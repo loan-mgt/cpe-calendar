@@ -1,13 +1,3 @@
-
-function copyLink(link) {
-    const fullLink = `${window.location.origin}${link}`;
-    navigator.clipboard.writeText(fullLink).then(() => {
-        showToast();
-    }).catch(err => {
-        console.error('Failed to copy text: ', err);
-    });
-}
-
 /*
 The unwrapped signing key.
 */
@@ -100,16 +90,3 @@ async function encryptMessage(message) {
     // Convert the ciphertext to Base64
     return arrayBufferToBase64(ciphertext);
 }
-
-
-function showToast() {
-    const toast = document.getElementById('toast');
-    toast.className = 'show';
-    setTimeout(() => {
-        toast.className = toast.className.replace('show', '');
-    }, 3000);
-}
-
-importPublicKey(pemEncodedKey).then(key => {
-    encryptionKey = key;
-});
