@@ -54,8 +54,16 @@
                     <label for="password">Mot de passe</label>
                     <input type="password" id="password" name="password" placeholder="Votre mot de passe CPE" required>
                 </div>
-                <button class="btn-primary" onclick="generateEncryptedLink()">Obtenez votre calendrier</button>
+                <button class="btn-primary" onclick="generateEncryptedLink(event)">
+                 <svg style="display: none;" id="loader" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><path fill="#ADC3C1" stroke="#ADC3C1" stroke-width="15" transform-origin="center" d="m148 84.7 13.8-8-10-17.3-13.8 8a50 50 0 0 0-27.4-15.9v-16h-20v16A50 50 0 0 0 63 67.4l-13.8-8-10 17.3 13.8 8a50 50 0 0 0 0 31.7l-13.8 8 10 17.3 13.8-8a50 50 0 0 0 27.5 15.9v16h20v-16a50 50 0 0 0 27.4-15.9l13.8 8 10-17.3-13.8-8a50 50 0 0 0 0-31.7Zm-47.5 50.8a35 35 0 1 1 0-70 35 35 0 0 1 0 70Z"><animateTransform type="rotate" attributeName="transform" calcMode="spline" dur="2" values="0;120" keyTimes="0;1" keySplines="0 0 1 1" repeatCount="indefinite"></animateTransform></path></svg>
+                    <span>Obtenez votre calendrier</span> 
+                </button>
             </form>
+            <div id="success">
+                <p>Votre lien de connexion est <b>copié</b> dans le presse-papier.</p>
+                <button class="btn-primary" onclick="copyLink()">Copier le lien</button>
+                <button class="btn-secondary" onclick="back()">Retour</button>
+            </div>
         </section>
 
         <section id="about" class="about">
@@ -103,41 +111,79 @@
 <script >
     const pemEncodedKey = `{{.PublicKey}}`;
     const separator = `{{.Separator}}`;
+    let url = '';
 
     
-function copyLink(link) {
-    const fullLink = `${window.location.origin}${link}`;
+function copyLink() {
+    const fullLink = `${window.location.origin}${url}`;
     navigator.clipboard.writeText(fullLink).then(() => {
-        showToast();
+        showToast('success', 'Lien copié avec succès!');
     }).catch(err => {
         console.error('Failed to copy text: ', err);
     });
 }
 
 
-    async function generateEncryptedLink() {
+    async function generateEncryptedLink(event) {
+        event.preventDefault();
+        document.querySelector("#loader").style.display = "block";
         try {
             const username = document.getElementById("email").value;
             const password = document.getElementById("password").value;
 
             if (!username || !password) {
-                alert("Please enter both username and password.");
+                showToast('error', 'Veuillez remplir tous les champs');
                 return;
             }
 
             const encryptedCreds = await encryptMessage(`${username}${separator}${password}`);
             if (!encryptedCreds) throw new Error('Encryption failed');
 
-            const url = `/your-cpe-calendar.ics?creds=${encodeURIComponent(encryptedCreds)}`;
-            copyLink(url);
+            // validate creds
+
+            res = await fetch(`/validate?creds=${encodeURIComponent(encryptedCreds)}`);
+            
+            console.log(res.ok);
+
+            if (!res.ok) {
+                showToast('error', 'Credentiel invalide');
+                console.log('Error validating creds:', res.statusText);
+            document.querySelector("#loader").style.display = "none";
+
+                return;
+            }
+
+             url = `/your-cpe-calendar.ics?creds=${encodeURIComponent(encryptedCreds)}`;
+            copyLink();
+
+            document.querySelector("form").style.display = "none";
+            document.querySelector("#success").style.display = "flex";
+            document.querySelector("#loader").style.display = "none";
         } catch (error) {
             console.error('Error generating encrypted link:', error);
+            document.querySelector("#loader").style.display = "none";
         }
+        document.querySelector("#loader").style.display = "none";
+        return false
     }
 
-    function showToast() {
+    function back() {
+        document.querySelector("form").style.display = "flex";
+        document.querySelector("#success").style.display = "none";
+    }
+
+    function showToast(type, message) {
     const toast = document.getElementById('toast');
-    toast.className = 'show';
+    toast.innerText = message;
+    if (type === 'error') {
+        toast.classList.add('error');
+        toast.classList.remove('success');
+    } else if (type === 'success') {
+        toast.classList.add('success');
+        toast.classList.remove('error');
+    }
+
+    toast.classList.add('show');
     setTimeout(() => {
         toast.className = toast.className.replace('show', '');
     }, 3000);

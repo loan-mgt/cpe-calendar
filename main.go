@@ -35,7 +35,7 @@ func main() {
 	r.HandleFunc("/your-cpe-calendar.ics", handlers.GenerateICSHandler).Methods("GET")
 
 	//validate route
-	r.HandleFunc("/validate", handlers.ValidateHandler).Methods("POST")
+	r.HandleFunc("/validate", handlers.ValidateHandler).Methods("GET")
 
 	// Use the router in the http server
 	log.Fatal(http.ListenAndServe(":8080", r))
