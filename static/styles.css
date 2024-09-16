@@ -34,6 +34,22 @@
     --border-radius-lg: 10px;
 }
 
+@media screen and (max-width: 600px) {
+    :root {
+        --font-size-base: 0.8rem;
+        --font-size-md: 1rem;
+        --font-size-lg: 1.2rem;
+        --font-size-xl: 2.5rem;
+        --font-size-2xl: 3rem;
+    }
+}
+
+@media screen and (max-width: 800px) {
+    .pc-nav {
+        display: none;
+    }   
+}
+
 /* Reset default styles */
 * {
     margin: 0;
@@ -95,7 +111,7 @@ nav ul li {
     display: flex;
 }
 
-ul img {
+nav img {
     height: 2rem;
 }
 
