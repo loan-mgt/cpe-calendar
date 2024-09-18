@@ -38,14 +38,6 @@ go mod download
 go run main.go
 ```
 
-# Trust
-
-As with all hosted open-source projects, there's no guarantee that the instance owner hasn't modified the official code. This implies a certain level of trust in the service chain. Depending on your trust level or risk tolerance, consider the following:
-
-1. **Full Trust**: Use the service as is.
-2. **Partial Trust**: Limit potential risks by creating a dedicated password for the service.
-3. **No Trust**: As this is an open-source project, you can host your own instance. A guide is available for setting it up.
-
 # Affiliation
 
 This project is entirely independent and is not affiliated with any school or organization.
