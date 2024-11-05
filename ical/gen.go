@@ -8,7 +8,7 @@ import (
 )
 
 // Regular expression for splitting title into components
-const regexPattern = `(?P<location>.*?)(?P<promo>[1-9][A-Z]{3,})(?P<summary>.*?)(?P<description>(( |n)[A-Z]{3,} .*)|$)`
+const regexPattern = `(?P<location>.*?) (?P<promo>[1-9][A-Z]{3,}(?: GR[A-Z])?) (?P<summary>.*?)(?P<description>(( |n)[A-Z]{3,} .*)|$)`
 
 // GenerateICS generates an ICS string from a list of events
 func GenerateICS(events []Event, calendarName string) string {
