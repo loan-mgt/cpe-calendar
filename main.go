@@ -37,6 +37,9 @@ func main() {
 	//validate route
 	r.HandleFunc("/validate", handlers.ValidateHandler).Methods("GET")
 
+	// check app health
+	r.HandleFunc("/health", handlers.Health).Methods("GET")
+
 	// Use the router in the http server
 	log.Fatal(http.ListenAndServe(":8080", r))
 }

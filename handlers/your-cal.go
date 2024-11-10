@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+func Health(w http.ResponseWriter, r *http.Request){
+	w.WriteHeader(http.StatusOK)
+}
+
 // generateICSHandler generates the ICS file and sends it in the response with a given filename
 func GenerateICSHandler(w http.ResponseWriter, r *http.Request) {
 	// Get start and end times from environment variables
