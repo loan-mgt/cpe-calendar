@@ -16,6 +16,9 @@ jobs:
     name: Build multi-platform Docker image
     runs-on: ubuntu-latest
 
+    outputs:
+      image-tags: ${{ steps.meta.outputs.tags }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
@@ -37,7 +40,7 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          push: false  # Only build, don't push in this step
+          load: true  # Load the built image into Docker's local cache
           tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -51,13 +54,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Load built Docker image
-        run: |
-          docker load --input $(docker save ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tags }})
-
       - name: Run Docker container for testing
         run: |
-          docker run -d -p 8080:8080 --name test_container ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.tags }}
+          docker run -d -p 8080:8080 --name test_container ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-image.outputs.image-tags }}
           sleep 2  # Wait for 2 seconds to allow the server to start
 
       - name: Test health endpoint
@@ -97,6 +96,6 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true  # Push the image in this step
-          tags: ${{ needs.build-image.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
