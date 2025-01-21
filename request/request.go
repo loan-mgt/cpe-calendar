@@ -1,7 +1,11 @@
 package request
 
 import (
+	"cpe/calendar/types"
+	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -11,48 +15,15 @@ import (
 )
 
 func FetchData(start, end, username, password string) ([]byte, error) {
-	// Step 1: Get an anonymous session cookie
-	sessionCookie, err := getAnonCookie()
+
+	token, err := login(username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	log.Printf("Anon cookie: %s\n", sessionCookie)
+	log.Printf("Token: %s\n", token)
 
-	// Step 2: Login and retrieve a new session cookie
-	sessionCookie, err = loginAndGetSessionAndViewState(sessionCookie, username, password)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Session cookie: %s\n", sessionCookie)
-
-	// Step 3: Retrieve the ViewState for the logged-in session
-	viewState, err := getUpdatedViewState(sessionCookie)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("ViewState: %s\n", viewState)
-
-	// Step 4: Access MainMenuPage.xhtml to maintain session
-	err = accessMainMenu(sessionCookie, viewState)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Accessed MainMenuPage.xhtml\n")
-
-	// Step 5: Access Planning landing page
-	viewState, j_idt, err := accessPlanningLanding(sessionCookie)
-	if err != nil {
-		return nil, err
-	}
-
-	log.Printf("Planning landing viewState: %s\n", viewState)
-
-	// Step 6: Use retrieved sessionCookie and viewState for the final data request
-	body, err := makeFinalDataRequest(sessionCookie, viewState, j_idt, start, end)
+	body, err := getCalendar(token, start, end)
 	if err != nil {
 		return nil, err
 	}
@@ -60,102 +31,44 @@ func FetchData(start, end, username, password string) ([]byte, error) {
 	return body, nil
 }
 
-func getAnonCookie() (string, error) {
-	// URL for initial anonymous request
-	urlStr := "https://mycpe.cpe.fr/faces/Login.xhtml"
+func login(username, password string) (types.TokenResponse, error) {
+	// Prepare the login request
+	urlStr := "https://mycpe.cpe.fr/mobile/login"
+	loginData := url.Values{"login": {username}, "password": {password}}
 
-	// Create a GET request
-	req, err := http.NewRequest("GET", urlStr, nil)
-	if err != nil {
-		return "", err
-	}
-
-	// Add headers
-	req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
-
-	// Send the request
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// Keep the cookies from the redirect chain
-			req.Header.Add("Cookie", via[0].Header.Get("Cookie"))
-			return nil
-		},
-	}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	// Retrieve session cookie
-	sessionCookie := ""
-	for _, cookie := range resp.Cookies() {
-		if cookie.Name == "JSESSIONID" {
-			sessionCookie = "JSESSIONID=" + cookie.Value
-			break
-		}
-	}
-
-	return sessionCookie, nil
-}
-
-func loginAndGetSessionAndViewState(anonCookie string, username string, password string) (string, error) {
-	// URL for login
-	urlStr := "https://mycpe.cpe.fr/login"
-
-	// Prepare form data for login
-	loginData := url.Values{
-		"username": {username},
-		"password": {password},
-	}
-
-	// Creating the login request
+	// Create the request
 	req, err := http.NewRequest("POST", urlStr, strings.NewReader(loginData.Encode()))
 	if err != nil {
-		return "", err
+		return types.TokenResponse{}, err
 	}
 
-	// Adding headers
-	req.Header.Add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
-	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
-	req.Header.Add("Cookie", anonCookie)
+	// Set headers
+	req.Header.Set("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 15; sdk_gphone64_x86_64 Build/AE3A.240806.005)")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	// Sending the login request
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error {
-			// trow error to stop the redirect
-			return errors.New("stop")
-		},
-	}
+	// Send the request
+	client := &http.Client{}
 	resp, err := client.Do(req)
-
 	if err != nil {
-		// return cookie from reponse
-		cookie := resp.Header.Get("Set-Cookie")
-
-		// Find the index of "JSESSIONID" and extract its value
-		if strings.Contains(cookie, "JSESSIONID") {
-			parts := strings.Split(cookie, ";")
-			for _, part := range parts {
-				if strings.HasPrefix(part, "JSESSIONID=") {
-					return strings.TrimSpace(part), nil
-				}
-			}
-		}
+		return types.TokenResponse{}, err
 	}
 	defer resp.Body.Close()
 
-	// Retrieve session cookie
-	sessionCookie := ""
-	for _, cookie := range resp.Cookies() {
-		if cookie.Name == "JSESSIONID" {
-			sessionCookie = "JSESSIONID=" + cookie.Value
-			break
-		}
+	// Read and unmarshal the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return types.TokenResponse{}, err
 	}
 
-	return sessionCookie, nil
+	var formattedResp types.TokenResponse
+	if err := json.Unmarshal(body, &formattedResp); err != nil {
+		return types.TokenResponse{}, err
+	}
+
+	return formattedResp, nil
 }
+
+
 
 func getUpdatedViewState(sessionCookie string) (string, error) {
 	// URL for the GET request
