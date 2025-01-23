@@ -4,13 +4,14 @@ import (
 	"cpe/calendar/decrypt"
 	"cpe/calendar/ical"
 	"cpe/calendar/request"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
 )
 
-func Health(w http.ResponseWriter, r *http.Request){
+func Health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -52,20 +53,14 @@ func GenerateICSHandler(w http.ResponseWriter, r *http.Request) {
 	pass := parts[1]
 
 	// Fetch data from the source
-	data, err := request.FetchData(start, end, username, pass)
+	events, err := request.FetchData(start, end, username, pass)
 	if err != nil {
 		log.Printf("Failed to fetch data: %v", err)
 		http.Error(w, "Failed to fetch data", http.StatusInternalServerError)
 		return
 	}
 
-	// Parse the fetched data
-	events, err := ical.ParseEvents(data)
-	if err != nil {
-		log.Printf("Failed to parse events: %v", err)
-		http.Error(w, "Failed to parse events", http.StatusInternalServerError)
-		return
-	}
+	fmt.Println("Event found", len(events))
 
 	// Generate the iCal file with the calendar name
 	icsContent := ical.GenerateICS(events, calendarName)
@@ -79,10 +74,6 @@ func GenerateICSHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ValidateHandler(w http.ResponseWriter, r *http.Request) {
-	// Get start and end times from environment variables
-	start := os.Getenv("START_TIMESTAMP")
-	end := os.Getenv("END_TIMESTAMP")
-
 	// Get separator from environment variable
 	separator := os.Getenv("SEPARATOR")
 
@@ -115,24 +106,12 @@ func ValidateHandler(w http.ResponseWriter, r *http.Request) {
 	pass := parts[1]
 
 	// Fetch data from the source
-	data, err := request.FetchData(start, end, username, pass)
+	_, err = request.Login(username, pass)
 	if err != nil {
 		log.Printf("Failed to fetch data: %v", err)
-		http.Error(w, "Failed to fetch data", http.StatusInternalServerError)
-		return
-	}
-
-	// Parse the fetched data
-	events, err := ical.ParseEvents(data)
-	if err != nil {
-		log.Printf("Failed to parse events: %v", err)
-		http.Error(w, "Failed to parse events", http.StatusInternalServerError)
-		return
-	}
-
-	if len(events) > 0 {
-		w.WriteHeader(http.StatusOK)
-	} else {
 		w.WriteHeader(http.StatusUnauthorized)
+		return
 	}
+
+	w.WriteHeader(http.StatusOK)
 }

@@ -1,17 +1,13 @@
 package ical
 
 import (
+	"cpe/calendar/types"
 	"fmt"
-	"regexp"
-	"strings"
 	"time"
 )
 
-// Regular expression for splitting title into components
-const regexPattern = `(?P<location>.*?) (?P<promo>[1-9][A-Z]{3,}(?: GR[A-Z0-9])?) (?P<summary>.*?)(?P<description>(( |n)[A-Z-]{3,} .*)|$)`
-
 // GenerateICS generates an ICS string from a list of events
-func GenerateICS(events []Event, calendarName string) string {
+func GenerateICS(events []types.Event, calendarName string) string {
 	ics := "BEGIN:VCALENDAR\n"
 	ics += "VERSION:2.0\n"
 	ics += "PRODID:-//github.com/qypol342 //CPE Calendar//EN\n"
@@ -22,36 +18,27 @@ func GenerateICS(events []Event, calendarName string) string {
 	ics += "REFRESH-INTERVAL;VALUE=DURATION:PT1H\n"
 
 	// Define the layout for parsing the datetime with a timezone offset
-	const layout = "2006-01-02T15:04:05-0700"
-
-	// Compile the regular expression
-	re := regexp.MustCompile(regexPattern)
+	const layout = "2006-01-02T15:04:05.000"
 
 	for _, event := range events {
-		// Remove newline characters from title
-		cleanedTitle := strings.ReplaceAll(event.Title, "\n", " ")
 
-		// Apply regex to split title
-		matches := re.FindStringSubmatch(cleanedTitle)
-		if matches == nil {
-			// Handle case where regex does not match
-			fmt.Println("Error parsing title:", event.Title)
+		if event.Favori == nil {
 			continue
 		}
 
 		// Extract components from regex matches
-		location := matches[1]
-		summary := matches[3]
-		description := matches[4]
+		location := event.Favori.F2
+		summary := event.Favori.F5 + event.Favori.F3
+		description := event.Favori.F4
 
 		// Parse the start and end times in the given time zone
-		start, err := time.Parse(layout, event.Start)
+		start, err := time.Parse(layout, event.DateDebut)
 		if err != nil {
 			// Handle parsing error
 			fmt.Println("Error parsing start time:", err)
 			continue
 		}
-		end, err := time.Parse(layout, event.End)
+		end, err := time.Parse(layout, event.DateFin)
 		if err != nil {
 			// Handle parsing error
 			fmt.Println("Error parsing end time:", err)
@@ -64,7 +51,7 @@ func GenerateICS(events []Event, calendarName string) string {
 
 		// Format times for ICS
 		ics += "BEGIN:VEVENT\n"
-		ics += fmt.Sprintf("UID:%s\n", event.ID)
+		ics += fmt.Sprintf("UID:%d\n", event.ID)
 		ics += fmt.Sprintf("DTSTART:%s\n", start.Format("20060102T150405Z"))
 		ics += fmt.Sprintf("DTEND:%s\n", end.Format("20060102T150405Z"))
 		ics += fmt.Sprintf("LOCATION:%s\n", location)
