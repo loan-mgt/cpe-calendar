@@ -19,6 +19,7 @@ func GenerateICS(events []types.Event, calendarName string) string {
 
 	// Define the layout for parsing the datetime with a timezone offset
 	const layout = "2006-01-02T15:04:05.000"
+	//"2019-11-27T16:38:55+07:00"
 
 	for _, event := range events {
 
@@ -45,9 +46,8 @@ func GenerateICS(events []types.Event, calendarName string) string {
 			continue
 		}
 
-		// Convert times to UTC
-		start = start.UTC()
-		end = end.UTC()
+		start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour(), start.Minute(), start.Second(), 0, time.Local).UTC()
+		end = time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), 0, time.Local).UTC()
 
 		// Format times for ICS
 		ics += "BEGIN:VEVENT\n"
