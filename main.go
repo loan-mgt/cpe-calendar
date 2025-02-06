@@ -2,6 +2,7 @@ package main
 
 import (
 	"cpe/calendar/handlers"
+	"cpe/calendar/metrics"
 	"html/template"
 	"log"
 	"net/http"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var tpl *template.Template
@@ -20,10 +23,16 @@ func init() {
 	godotenv.Load()
 	// Parse templates
 	tpl = template.Must(template.ParseFiles(filepath.Join("static", "index.html")))
+
+	prometheus.Register(metrics.TotalRequests)
+	prometheus.Register(metrics.ResponseStatus)
+	prometheus.Register(metrics.HttpDuration)
 }
 
 func main() {
 	r := mux.NewRouter()
+	r.Use(metrics.PrometheusMiddleware)
+	r.Path("/metrics").Handler(promhttp.Handler())
 
 	// Serve dynamic index page
 	r.HandleFunc("/", serveIndex).Methods("GET")

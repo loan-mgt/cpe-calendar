@@ -1,6 +1,8 @@
 # Build stage
 FROM golang:1.23-alpine AS builder
 
+ENV CGO_ENABLED=0
+
 # Create a working directory
 WORKDIR /app
 
@@ -15,7 +17,7 @@ COPY . .
 RUN go build -o /app/calendar-app main.go
 
 # Final stage
-FROM alpine:latest
+FROM golang:1.23-alpine
 
 # Install openssl
 RUN apk add --no-cache openssl
