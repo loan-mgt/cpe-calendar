@@ -1,6 +1,7 @@
 package ical
 
 import (
+	"cpe/calendar/logger"
 	"cpe/calendar/types"
 	"fmt"
 	"time"
@@ -8,6 +9,7 @@ import (
 
 // GenerateICS generates an ICS string from a list of events
 func GenerateICS(events []types.Event, calendarName string) string {
+	// Start building the ICS string
 	ics := "BEGIN:VCALENDAR\n"
 	ics += "VERSION:2.0\n"
 	ics += "PRODID:-//github.com/qypol342 //CPE Calendar//EN\n"
@@ -19,11 +21,15 @@ func GenerateICS(events []types.Event, calendarName string) string {
 
 	// Define the layout for parsing the datetime with a timezone offset
 	const layout = "2006-01-02T15:04:05.000"
-	//"2019-11-27T16:38:55+07:00"
 
+	// Loop over each event and generate the calendar content
 	for _, event := range events {
 
 		if event.Favori == nil {
+			// Log skipped events due to missing Favori field
+			logger.Log.Warn().
+				Int64("eventID", *event.ID).
+				Msg("Skipping event due to missing Favori data")
 			continue
 		}
 
@@ -35,21 +41,37 @@ func GenerateICS(events []types.Event, calendarName string) string {
 		// Parse the start and end times in the given time zone
 		start, err := time.Parse(layout, event.DateDebut)
 		if err != nil {
-			// Handle parsing error
-			fmt.Println("Error parsing start time:", err)
-			continue
-		}
-		end, err := time.Parse(layout, event.DateFin)
-		if err != nil {
-			// Handle parsing error
-			fmt.Println("Error parsing end time:", err)
+			logger.Log.Error().
+				Err(err).
+				Int64("eventID", *event.ID).
+				Str("startDate", event.DateDebut).
+				Msg("Error parsing start time")
 			continue
 		}
 
+		end, err := time.Parse(layout, event.DateFin)
+		if err != nil {
+			logger.Log.Error().
+				Err(err).
+				Int64("eventID", *event.ID).
+				Str("endDate", event.DateFin).
+				Msg("Error parsing end time")
+			continue
+		}
+
+		// Normalize start and end times to UTC
 		start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour(), start.Minute(), start.Second(), 0, time.Local).UTC()
 		end = time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), 0, time.Local).UTC()
 
-		// Format times for ICS
+		// Log event details
+		logger.Log.Info().
+			Int64("eventID", *event.ID).
+			Str("summary", summary).
+			Str("start", start.String()).
+			Str("end", end.String()).
+			Msg("Event processed for ICS generation")
+
+		// Add event details to ICS string
 		ics += "BEGIN:VEVENT\n"
 		ics += fmt.Sprintf("UID:%d\n", event.ID)
 		ics += fmt.Sprintf("DTSTART:%s\n", start.Format("20060102T150405Z"))
@@ -60,7 +82,13 @@ func GenerateICS(events []types.Event, calendarName string) string {
 		ics += "END:VEVENT\n"
 	}
 
+	// Close the VCALENDAR block
 	ics += "END:VCALENDAR\n"
+
+	// Log the successful generation of the ICS content
+	logger.Log.Info().
+		Int("eventCount", len(events)).
+		Msg("Generated ICS content successfully")
 
 	return ics
 }
