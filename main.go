@@ -23,7 +23,7 @@ func init() {
 	err := godotenv.Load()
 	if err != nil {
 		// Log error and exit if environment variables can't be loaded
-		logger.Log.Fatal().Err(err).Msg("Error loading .env file")
+		logger.Log.Warn().Err(err).Msg("Error loading .env file")
 	}
 
 	// Parse templates
