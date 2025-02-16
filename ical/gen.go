@@ -28,7 +28,7 @@ func GenerateICS(events []types.Event, calendarName string) string {
 		if event.Favori == nil {
 			// Log skipped events due to missing Favori field
 			logger.Log.Warn().
-				Int64("eventID", *event.ID).
+				Str("eventID", fmt.Sprintf("%v", event.ID)).
 				Msg("Skipping event due to missing Favori data")
 			continue
 		}

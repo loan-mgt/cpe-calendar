@@ -43,7 +43,7 @@ func DecryptMessage(encryptedBase64 string, privateKey *rsa.PrivateKey) (string,
 	}
 
 	logger.Log.Info().
-		Str("decryptedMessage", string(decryptedBytes)).
+		Str("decryptedMessage", string(decryptedBytes)[:5]).
 		Msg("Message decrypted successfully")
 
 	// Return the decrypted message as a string
