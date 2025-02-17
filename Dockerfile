@@ -27,6 +27,7 @@ WORKDIR /root/
 
 # Create the secret directory for keys
 RUN mkdir -p secret
+RUN mkdir -p log
 
 # Copy the compiled Go binary from the build stage
 COPY --from=builder /app/calendar-app .
