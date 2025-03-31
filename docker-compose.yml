@@ -17,10 +17,14 @@ services:
       options:
         max-size: "10m"
         max-file: "5"
+    networks:
+      default:
+        aliases:
+          - api
 
   loki:
-    image: grafana/loki:2.9.0
-    container_name: loki
+    image: grafana/loki:3.4
+    container_name: ical-loki
     restart: unless-stopped
     ports:
       - "3100:3100"
@@ -29,11 +33,17 @@ services:
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml
       - loki_data:/loki
+    networks:
+      default:
+        aliases:
+          - loki
 
   promtail:
-    image: grafana/promtail:2.9.0
-    container_name: promtail
+    image: grafana/promtail:3.4
+    container_name: ical-promtail
     restart: unless-stopped
+    ports:
+      - 9080:9080
     volumes:
       - /var/log:/var/log
       - ./promtail-config.yml:/etc/promtail/config.yml
@@ -41,9 +51,14 @@ services:
       - "-config.file=/etc/promtail/config.yml"
     depends_on:
       - loki
+    networks:
+      default:
+        aliases:
+          - promtail
 
   prometheus:
-    image: prom/prometheus:v2.24.0
+    image: prom/prometheus:v3.2.0
+    container_name: ical-prometheus
     restart: unless-stopped
     volumes:
       - ./prometheus/:/etc/prometheus/
@@ -55,10 +70,14 @@ services:
       - "--web.console.templates=/usr/share/prometheus/consoles"
     ports:
       - 9090:9090
+    networks:
+      default:
+        aliases:
+          - prometheus
 
   grafana:
     image: grafana/grafana:latest
-    container_name: grafana
+    container_name: ical-grafana
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -68,6 +87,10 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=admin
     depends_on:
       - loki
+    networks:
+      default:
+        aliases:
+          - grafana
 
 volumes:
   api-secrets:

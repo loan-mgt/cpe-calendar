@@ -60,14 +60,23 @@ func GenerateICS(events []types.Event, calendarName string) string {
 		}
 
 		// Normalize start and end times to UTC
-		start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour(), start.Minute(), start.Second(), 0, time.Local).UTC()
-		end = time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), 0, time.Local).UTC()
+		loc, err := time.LoadLocation("Europe/Paris")
+		if err != nil {
+			logger.Log.Error().
+				Err(err).
+				Msg("Error loading Paris time zone")
+			continue
+		}
+
+		start = time.Date(start.Year(), start.Month(), start.Day(), start.Hour(), start.Minute(), start.Second(), 0, loc).UTC()
+		end = time.Date(end.Year(), end.Month(), end.Day(), end.Hour(), end.Minute(), end.Second(), 0, loc).UTC()
 
 		// Log event details
 		logger.Log.Info().
 			Int64("eventID", *event.ID).
 			Str("summary", summary).
 			Str("start", start.String()).
+			Str("startUTC", start.UTC().String()).
 			Str("end", end.String()).
 			Msg("Event processed for ICS generation")
 

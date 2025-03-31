@@ -1,6 +1,5 @@
-version: "3.8"
 services:
-  ical-api:
+  api:
     image: ghcr.io/loan-mgt/cpe-calendar:latest
     container_name: ical-api
     restart: unless-stopped
@@ -12,14 +11,19 @@ services:
       - SEPARATOR=${SEPARATOR}
     volumes:
       - api-secrets:/root/secret
+      - /var/log:/root/log
     logging:
-        driver: "json-file"
-        options:
-          max-size: "10m"
-          max-file: "5"
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      default:
+        aliases:
+          - api
 
   loki:
-    image: grafana/loki:2.9.0
+    image: grafana/loki:3.4
     container_name: ical-loki
     restart: unless-stopped
     ports:
@@ -29,9 +33,13 @@ services:
     volumes:
       - ./loki-config.yml:/etc/loki/local-config.yaml
       - loki_data:/loki
+    networks:
+      default:
+        aliases:
+          - loki
 
   promtail:
-    image: grafana/promtail:2.9.0
+    image: grafana/promtail:3.4
     container_name: ical-promtail
     restart: unless-stopped
     ports:
@@ -43,9 +51,13 @@ services:
       - "-config.file=/etc/promtail/config.yml"
     depends_on:
       - loki
+    networks:
+      default:
+        aliases:
+          - promtail
 
   prometheus:
-    image: prom/prometheus:v2.24.0
+    image: prom/prometheus:v3.2.0
     container_name: ical-prometheus
     restart: unless-stopped
     volumes:
@@ -58,6 +70,10 @@ services:
       - "--web.console.templates=/usr/share/prometheus/consoles"
     ports:
       - 9090:9090
+    networks:
+      default:
+        aliases:
+          - prometheus
 
   grafana:
     image: grafana/grafana:latest
@@ -71,6 +87,10 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${PWD}
     depends_on:
       - loki
+    networks:
+      default:
+        aliases:
+          - grafana
 
 volumes:
   api-secrets:
@@ -78,5 +98,3 @@ volumes:
   loki_data:
   grafana_data:
 networks: {}
-
-
